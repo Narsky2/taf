@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point-NET</title>
+    <style>
+        /* === Reset & Base === */
+        :root {
+            --primary: #2c8a8a;
+            --primary-dark: #1d6d6d;
+            --secondary: #f8f9fac7;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --success: #2ecc71;
+            --dark: #34495e;
+            --light: #ecf0f194;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* === Typographie === */
+        h1 { font-size: 2rem; }
+        h2 { font-size: 1.75rem; }
+        h3 { font-size: 1.5rem; }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.3rem; }
+        }
+        
+        /* === Layout Responsive === */
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Header Mobile First */
+        .header {
+            background-color: var(--dark);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: block;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--dark);
+            color: white;
+            transform: translateX(-100%);
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            z-index: 90;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 1rem;
+            margin-top: 60px;
+            transition: margin-left 0.3s;
+        }
+        
+        @media (min-width: 992px) {
+            .container {
+                flex-direction: row;
+            }
+            
+            .menu-btn {
+                display: none;
+            }
+            
+            .sidebar {
+                transform: translateX(0);
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                padding-top: 60px;
+            }
+            
+            .main-content {
+                margin-left: 250px;
+            }
+        }
+        
+        /* === Composants Responsive === */
+        .card {
+            background: rgba(255, 255, 255, 0.925);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .btn-primary {
+           background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        /* === Tableaux Responsive === */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            min-width: 600px;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* === Formulaire === */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        /* === Authentification === */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            background: linear-gradient(to bottom, #0576e6b7, #0576e648, #032c55f1);
+        }
+        
+        .auth-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        /* === Alertes === */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left-color: #ffeeba;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left-color: #f5c6cb;
+        }
+        
+        /* === Grille Responsive === */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        /* === Utilitaires === */
+        .text-center {
+            text-align: center;
+        }
+        
+        .mt-3 { margin-top: 1rem; }
+        .mb-3 { margin-bottom: 1rem; }
+        .my-3 { margin: 1rem 0; }
+        
+        .d-flex {
+            display: flex;
+        }
+        
+        .flex-column {
+            flex-direction: column;
+        }
+        
+        .justify-content-between {
+            justify-content: space-between;
+        }
+        
+        .align-items-center {
+            align-items: center;
+        }
+        
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 1rem; }
+        
+        /* === Animation === */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        /* === Overlay === */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 80;
+            display: none;
+        }
+        
+        .overlay.open {
+            display: block;
+        }
+        
+        /* === Modal === */
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .modal.open {
+            display: block;
+        }
+        
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1rem;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* === Styles spécifiques aux ventes === */
+        .sale-total-row {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        
+        .sale-total-row td {
+            border-top: 2px solid var(--primary);
+        }
+
+         canvas#particles { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: -1; 
+        }  
+
+        .logo-container { padding-left: 120px; display: flex; align-items: center; gap: 10px; }
+        .logo { width: 70px; height: 70px; border-radius: 50%; background-image: url(img/logo.jpeg); }
+        .app-name { font-size: 24px; font-weight: 700; color: #04315a; }
+    </style>
+</head>
+<body>
+      
+     <canvas id="particles"></canvas>
+
+    <!-- Vue Authentification -->
+    <div id="authView" class="auth-container">
+        <div class="auth-card fade-in">
+            <div class="logo-container">
+            <img src="img/logo.jpeg" alt="Logo" class="logo">
+            <span class="app-name">Point-NET</span>
+        </div>
+           
+            <div id="loginError" class="alert alert-danger" style="display: none;"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">utilisateur</label>
+                    <input type="text" id="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2" 
+                style="background: linear-gradient(to right, #0575E6, #021B79);">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Vue Application -->
+    <div id="appView" class="container" style="display: none;">
+        <!-- Header Mobile -->
+        <header class="header">
+            <button class="menu-btn" id="menuToggle">☰</button>
+            <h1 id="pageTitle">Tableau de bord</h1>
+            <div style="width: 24px;"></div>
+        </header>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div style="padding: 1rem;">
+                <h2 style="color: white; margin-bottom: 1.5rem; padding-top: 1rem;">FishStock</h2>
+                <nav>
+                    <ul style="list-style: none;">
+                        <li style="margin-bottom: 0.5rem;">
+                            <a href="#" onclick="showView('dashboard')" class="nav-link active">
+                                📊 Tableau de bord
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <a href="#" onclick="showView('stock')" class="nav-link">
+                                🐟 Gestion du Stock
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <a href="#" onclick="showView('sales')" class="nav-link">
+                                💰 Ventes
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.5rem;">
+                            <a href="#" onclick="showView('suppliers')" class="nav-link">
+                                🚚 Fournisseurs
+                            </a>
+                        </li>
+                        <li style="margin-bottom: 0.5rem; margin-top: 2rem;">
+                            <a href="#" onclick="logout()" class="nav-link">
+                                🔒 Déconnexion
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+        
+        <!-- Overlay pour mobile -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- Contenu Principal -->
+        <main class="main-content" id="mainContent">
+            <!-- Tableau de Bord -->
+            <div id="dashboardView">
+                <div class="grid">
+                    <div class="card">
+                        <h3>Stock Total</h3>
+                        <p style="font-size: 1.8rem; font-weight: bold;">1,245 kg</p>
+                    </div>
+                    <div class="card">
+                        <h3>Ventes Aujourd'hui</h3>
+                        <p style="font-size: 1.8rem; font-weight: bold;">80.000 FCFA</p>
+                    </div>
+                    <div class="card">
+                        <h3>Alertes Stock</h3>
+                        <p style="font-size: 1.8rem; font-weight: bold; color: var(--danger);">3</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <h2>Produits à réapprovisionner</h2>
+                        <button class="btn btn-warning align-self-start">Voir tout le stock</button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Quantité</th>
+                                    <th>Seuil Min</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Thon</td>
+                                    <td style="color: var(--danger); font-weight: bold;">8 kg</td>
+                                    <td>15 kg</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" >Commander</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Crevettes </td>
+                                    <td style="color: var(--danger); font-weight: bold;">4 kg</td>
+                                    <td>10 kg</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm">Commander</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion du Stock -->
+            <div id="stockView" style="display: none;">
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <h1 style="color: #fff;">Gestion du Stock</h1>
+                    <button class="btn btn-primary align-self-start" onclick="showProductModal()">+ Ajouter Produit</button>
+                </div>
+                
+                <div class="card">
+                    <div class="alert alert-warning">
+                        <strong>Attention :</strong> 3 produits sont en dessous du seuil minimum.
+                    </div>
+                    
+                    <div class="form-group" style="max-width: 300px;">
+                        <input type="text" id="searchProduct" class="form-control" placeholder="Rechercher un produit...">
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Catégorie</th>
+                                    <th>Quantité</th>
+                                    <th>Prix</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion des Ventes -->
+            <div id="salesView" style="display: none;">
+                <div class="d-flex flex-column gap-2 mb-3">
+                    <h1 style="color: #fff;">Gestion des Ventes</h1>
+                    <button class="btn btn-primary align-self-start" onclick="showSaleModal()">+ Nouvelle Vente</button>
+                </div>
+                
+                <div class="card">
+                    <div class="table-responsive">
+                        <table id="salesTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Catégorie</th>
+                                    <th>Prix Unitaire (FCFA)</th>
+                                    <th>Quantité Vendue (kg)</th>
+                                    <th>Montant Total (FCFA)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="sale-total-row">
+                                    <td colspan="3"><strong>Total Général</strong></td>
+                                    <td id="totalQuantity">0 kg</td>
+                                    <td id="totalAmount">00 FCFA</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion Fournisseurs -->
+            <div id="suppliersView" style="display: none;">
+                <h1 style="color: #fff;">Gestion des Fournisseurs</h1>
+                <div class="card">
+                    <p>Interface fournisseurs à implémenter...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Produit -->
+    <div class="modal" id="productModal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Ajouter un Produit</h2>
+            <button class="close-btn" onclick="hideProductModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label for="productName">Nom du produit</label>
+                    <input type="text" id="productName" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productCategory">Catégorie</label>
+                    <select id="productCategory" class="form-control" required>
+                        <option value="poisson">Poisson</option>
+                        <option value="crustace">Crustacé</option>
+                        <option value="coquillage">Coquillage</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productQuantity">Quantité (kg)</label>
+                    <input type="number" id="productQuantity" class="form-control" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productPrice">Prix Unitaire (FCFA)</label>
+                    <input type="number" id="productPrice" class="form-control" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="productThreshold">Seuil d'alerte (kg)</label>
+                    <input type="number" id="productThreshold" class="form-control" step="0.01" required>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="hideProductModal()">Annuler</button>
+            <button class="btn btn-primary" onclick="saveProduct()">Enregistrer</button>
+        </div>
+    </div>
+
+    <!-- Modal Vente -->
+    <div class="modal" id="saleModal">
+        <div class="modal-header">
+            <h2>Nouvelle Vente</h2>
+            <button class="close-btn" onclick="hideSaleModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="saleForm">
+                <div class="form-group">
+                    <label for="saleDate">Date</label>
+                    <input type="date" id="saleDate" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="saleProduct">Produit</label>
+                    <select id="saleProduct" class="form-control" required>
+                        <option value="">Sélectionner un produit</option>
+                        <!-- Rempli dynamiquement -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="saleQuantity">Quantité (kg)</label>
+                    <input type="number" id="saleQuantity" class="form-control" step="0.01" min="0.1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Prix Unitaire: <span id="unitPriceDisplay">0.00</span> FCFA</label>
+                </div>
+                
+                <div class="form-group">
+                    <label>Montant Total: <span id="totalPriceDisplay">0.00</span> FCFA</label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="hideSaleModal()">Annuler</button>
+            <button class="btn btn-primary" onclick="saveSale()">Enregistrer</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="modalOverlay"></div>
+
+    <script>
+        // ===== DONNÉES SIMULÉES =====
+        let currentUser = null;
+        let products = [
+            { id: 1, name: "Saumon Atlantique", category: "poisson", quantity: 8.5, price: 14.99, threshold: 15 },
+            { id: 2, name: "Crevettes Roses", category: "crustace", quantity: 4.0, price: 19.50, threshold: 10 },
+            { id: 3, name: "Moules de Bouchot", category: "coquillage", quantity: 22.0, price: 8.90, threshold: 5 },
+            { id: 4, name: "Bar de Ligne", category: "poisson", quantity: 12.3, price: 22.50, threshold: 8 }
+        ];
+
+        let sales = [
+            { id: 1, date: '2023-10-01', productId: 1, quantity: 5.2, unitPrice: 14.99 },
+            { id: 2, date: '2023-10-01', productId: 2, quantity: 3.5, unitPrice: 19.50 },
+            { id: 3, date: '2023-10-02', productId: 1, quantity: 7.8, unitPrice: 14.99 },
+            { id: 4, date: '2023-10-02', productId: 3, quantity: 12.0, unitPrice: 8.90 }
+        ];
+
+        // ===== GESTION DU RESPONSIVE =====
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+        });
+        
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        });
+        
+        // Fermer le sidebar quand un lien est cliqué (sur mobile)
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 992) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('open');
+                }
+            });
+        });
+
+        // ===== GESTION AUTHENTIFICATION =====
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Simulation d'authentification
+            if ((username === 'admin' && password === 'admin123') || 
+                (username === 'user' && password === 'user123')) {
+                currentUser = {
+                    username: username,
+                    role: username === 'admin' ? 'admin' : 'user'
+                };
+                
+                document.getElementById('authView').style.display = 'none';
+                document.getElementById('appView').style.display = 'flex';
+                showView('dashboard');
+            } else {
+                const errorElement = document.getElementById('loginError');
+                errorElement.textContent = 'Identifiants incorrects';
+                errorElement.style.display = 'block';
+                setTimeout(() => errorElement.style.display = 'none', 3000);
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('appView').style.display = 'none';
+            document.getElementById('authView').style.display = 'flex';
+            document.getElementById('loginForm').reset();
+        }
+
+        // ===== NAVIGATION =====
+        function showView(viewName) {
+            // Masquer toutes les vues
+            document.getElementById('dashboardView').style.display = 'none';
+            document.getElementById('stockView').style.display = 'none';
+            document.getElementById('salesView').style.display = 'none';
+            document.getElementById('suppliersView').style.display = 'none';
+            
+            // Afficher la vue demandée
+            document.getElementById(viewName + 'View').style.display = 'block';
+            document.getElementById('pageTitle').textContent = document.querySelector(`[onclick="showView('${viewName}')"]`).textContent.trim();
+            
+            // Charger les données si nécessaire
+            if (viewName === 'stock') {
+                renderProducts();
+            } else if (viewName === 'sales') {
+                renderSales();
+            }
+            
+            // Mettre à jour le lien actif dans la sidebar
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showView('${viewName}')"]`).classList.add('active');
+        }
+
+        // ===== GESTION PRODUITS =====
+        function renderProducts() {
+            const tableBody = document.getElementById('productsTable');
+            tableBody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.name}</td>
+                    <td>${formatCategory(product.category)}</td>
+                    <td class="${product.quantity < product.threshold ? 'text-danger' : ''}" style="font-weight: ${product.quantity < product.threshold ? 'bold' : 'normal'}">
+                        ${product.quantity} kg
+                        ${product.quantity < product.threshold ? ' ⚠️' : ''}
+                    </td>
+                    <td>${product.price.toFixed(2)} FCFA</td>
+                    <td class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="editProduct(${product.id})">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteProduct(${product.id})">🗑️</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function showProductModal(productId = null) {
+            const modal = document.getElementById('productModal');
+            const overlay = document.getElementById('modalOverlay');
+            
+            if (productId) {
+                // Mode édition
+                document.getElementById('modalTitle').textContent = 'Modifier Produit';
+                const product = products.find(p => p.id === productId);
+                
+                document.getElementById('productId').value = product.id;
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productCategory').value = product.category;
+                document.getElementById('productQuantity').value = product.quantity;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productThreshold').value = product.threshold;
+            } else {
+                // Mode ajout
+                document.getElementById('modalTitle').textContent = 'Ajouter Produit';
+                document.getElementById('productForm').reset();
+                document.getElementById('productId').value = '';
+            }
+            
+            modal.classList.add('open');
+            overlay.classList.add('open');
+        }
+
+        function hideProductModal() {
+            document.getElementById('productModal').classList.remove('open');
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        function editProduct(id) {
+            showProductModal(id);
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+                products = products.filter(p => p.id !== id);
+                renderProducts();
+                alert('Produit supprimé avec succès !');
+            }
+        }
+
+        function saveProduct() {
+            const productId = document.getElementById('productId').value;
+            const productData = {
+                name: document.getElementById('productName').value,
+                category: document.getElementById('productCategory').value,
+                quantity: parseFloat(document.getElementById('productQuantity').value),
+                price: parseFloat(document.getElementById('productPrice').value),
+                threshold: parseFloat(document.getElementById('productThreshold').value)
+            };
+            
+            if (productId) {
+                // Édition
+                const index = products.findIndex(p => p.id == productId);
+                products[index] = { ...products[index], ...productData };
+            } else {
+                // Ajout
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, ...productData });
+            }
+            
+            hideProductModal();
+            renderProducts();
+            alert('Produit enregistré avec succès !');
+        }
+
+        // ===== GESTION VENTES =====
+        function renderSales() {
+            const tableBody = document.querySelector('#salesTable tbody');
+            tableBody.innerHTML = '';
+            
+            let totalQuantity = 0;
+            let totalAmount = 0;
+            
+            // Grouper par date et catégorie
+            const salesByDateCategory = {};
+            
+            sales.forEach(sale => {
+                const product = products.find(p => p.id === sale.productId);
+                if (!product) return;
+                
+                const date = sale.date;
+                const category = product.category;
+                
+                if (!salesByDateCategory[date]) salesByDateCategory[date] = {};
+                if (!salesByDateCategory[date][category]) {
+                    salesByDateCategory[date][category] = {
+                        unitPrice: sale.unitPrice,
+                        quantity: 0,
+                        amount: 0
+                    };
+                }
+                
+                salesByDateCategory[date][category].quantity += sale.quantity;
+                salesByDateCategory[date][category].amount += sale.quantity * sale.unitPrice;
+            });
+            
+            // Remplir le tableau
+            Object.keys(salesByDateCategory).forEach(date => {
+                Object.keys(salesByDateCategory[date]).forEach(category => {
+                    const saleData = salesByDateCategory[date][category];
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${formatDate(date)}</td>
+                        <td>${formatCategory(category)}</td>
+                        <td>${saleData.unitPrice.toFixed(2)} FCFA</td>
+                        <td>${saleData.quantity.toFixed(2)} kg</td>
+                        <td>${saleData.amount.toFixed(2)} FCFA</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSale('${date}', '${category}')">🗑️</button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                    
+                    totalQuantity += saleData.quantity;
+                    totalAmount += saleData.amount;
+                });
+            });
+            
+            // Mettre à jour les totaux
+            document.getElementById('totalQuantity').textContent = totalQuantity.toFixed(2) + ' kg';
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2) + ' FCFA';
+        }
+
+        function formatDate(dateString) {
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('fr-FR', options);
+        }
+
+        function formatCategory(category) {
+            const categories = {
+                'poisson': 'Poisson',
+                'crustace': 'Crustacé',
+                'coquillage': 'Coquillage'
+            };
+            return categories[category] || category;
+        }
+
+        function showSaleModal() {
+            const modal = document.getElementById('saleModal');
+            const productSelect = document.getElementById('saleProduct');
+            
+            // Remplir la liste des produits
+            productSelect.innerHTML = '<option value="">Sélectionner un produit</option>';
+            products.forEach(product => {
+                if (product.quantity > 0) { // Ne montrer que les produits en stock
+                    const option = document.createElement('option');
+                    option.value = product.id;
+                    option.textContent = `${product.name} (${formatCategory(product.category)}) - Stock: ${product.quantity} kg - ${product.price.toFixed(2)} FCFA/kg`;
+                    productSelect.appendChild(option);
+                }
+            });
+            
+            // Définir la date du jour par défaut
+            document.getElementById('saleDate').valueAsDate = new Date();
+            
+            // Réinitialiser les autres champs
+            document.getElementById('saleQuantity').value = '';
+            document.getElementById('unitPriceDisplay').textContent = '0.00';
+            document.getElementById('totalPriceDisplay').textContent = '0.00';
+            
+            modal.classList.add('open');
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function hideSaleModal() {
+            document.getElementById('saleModal').classList.remove('open');
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        // Mettre à jour le prix quand le produit change
+        document.getElementById('saleProduct').addEventListener('change', function() {
+            const productId = this.value;
+            const product = products.find(p => p.id == productId);
+            
+            if (product) {
+                document.getElementById('unitPriceDisplay').textContent = product.price.toFixed(2);
+                calculateTotal();
+            } else {
+                document.getElementById('unitPriceDisplay').textContent = '0.00';
+                document.getElementById('totalPriceDisplay').textContent = '0.00';
+            }
+        });
+
+        // Mettre à jour le total quand la quantité change
+        document.getElementById('saleQuantity').addEventListener('input', calculateTotal);
+
+        function calculateTotal() {
+            const quantity = parseFloat(document.getElementById('saleQuantity').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('unitPriceDisplay').textContent) || 0;
+            const total = quantity * unitPrice;
+            document.getElementById('totalPriceDisplay').textContent = total.toFixed(2);
+        }
+
+        function saveSale() {
+            const productId = parseInt(document.getElementById('saleProduct').value);
+            const quantity = parseFloat(document.getElementById('saleQuantity').value);
+            const date = document.getElementById('saleDate').value;
+            
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                alert('Veuillez sélectionner un produit valide');
+                return;
+            }
+            
+            // Vérifier le stock
+            if (quantity > product.quantity) {
+                alert(`Stock insuffisant! Il ne reste que ${product.quantity} kg de ${product.name}`);
+                return;
+            }
+            
+            if (quantity <= 0) {
+                alert('La quantité doit être supérieure à zéro');
+                return;
+            }
+            
+            // Créer la nouvelle vente
+            const newSale = {
+                id: sales.length > 0 ? Math.max(...sales.map(s => s.id)) + 1 : 1,
+                date: date,
+                productId: productId,
+                quantity: quantity,
+                unitPrice: product.price
+            };
+            
+            // Mettre à jour les données
+            sales.push(newSale);
+            product.quantity -= quantity;
+            
+            // Rafraîchir les affichages
+            renderSales();
+            if (document.getElementById('stockView').style.display === 'block') {
+                renderProducts();
+            }
+            
+            hideSaleModal();
+            alert('Vente enregistrée avec succès!');
+        }
+
+        function deleteSale(date, category) {
+            if (confirm(`Supprimer toutes les ventes du ${formatDate(date)} pour ${formatCategory(category)} ?`)) {
+                sales = sales.filter(sale => {
+                    const saleDate = sale.date;
+                    const product = products.find(p => p.id === sale.productId);
+                    if (saleDate === date && product.category === category) {
+                        // Restaurer le stock
+                        const product = products.find(p => p.id === sale.productId);
+                        if (product) product.quantity += sale.quantity;
+                        return false;
+                    }
+                    return true;
+                });
+                
+                renderSales();
+                if (document.getElementById('stockView').style.display === 'block') {
+                    renderProducts();
+                }
+                
+                alert('Ventes supprimées avec succès!');
+            }
+        }
+
+        // ===== INITIALISATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Style pour le texte d'alerte
+            const style = document.createElement('style');
+            style.textContent = `
+                .text-danger { color: var(--danger); }
+                .nav-link { 
+                    color: white; 
+                    text-decoration: none; 
+                    display: block; 
+                    padding: 0.75rem; 
+                    border-radius: 6px;
+                    transition: background-color 0.3s;
+                }
+                .nav-link:hover {
+                    background-color: rgba(255,255,255,0.1);
+                }
+                .nav-link.active {
+                    background-color: var(--primary);
+                    font-weight: bold;
+                }
+                .w-100 { width: 100%; }
+            `;
+            document.head.appendChild(style);
+            
+            // Gestion de la recherche produits
+            document.getElementById('searchProduct').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#productsTable tr');
+                
+                rows.forEach(row => {
+                    const productName = row.cells[1].textContent.toLowerCase();
+                    row.style.display = productName.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        });
+
+        // Animation des particules
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = Math.random() * 2 - 1;
+                this.vy = Math.random() * 2 - 1;
+                this.radius = Math.random() * 2;
+                this.color = `hsl(${Math.random() * 400}, 100%, 50%)`;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        const particles = Array(100).fill().map(() => new Particle());
+
+        function animateParticles() {
+            ctx.fillStyle = 'rgba(0,0.01,0,0.050)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+    </script>
+</body>
+</html>
